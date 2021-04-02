@@ -1,40 +1,26 @@
+import click
 import psycopg2
 from psycopg2 import Error
 
+params = None
 
-if __name__ == "__main__" :
-    username = input("Enter username: ")
-    password = input("Enter password: ")
-    params = dict(user=username,
-                                  password=password,
-                                  host="web0.eecs.uottawa.ca",
-                                  port="15432",
-                                  database=username)
-try:
-    # Connect to an existing database
-    connection = psycopg2.connect(**params)
+@click.group()
+def cli():
+    """
+    Welcome to our hotel interface
+    """
+    pass
 
-    # Create a cursor to perform database operations
-    cursor = connection.cursor()
-    # Print PostgreSQL details
-    print("PostgreSQL server information")
-    print(connection.get_dsn_parameters(), "\n")
-    # Executing a SQL query
-    cursor.execute("SELECT version();")
-    # Fetch result
-    record = cursor.fetchone()
-    print("You are connected to - ", record, "\n")
-
-except (Exception, Error) as error:
-    print("Error while connecting to PostgreSQL", error)
-finally:
-    if (connection):
-        cursor.close()
-        connection.close()
-        print("PostgreSQL connection is closed")
+def main():
+    value = click.prompt('Select a command to run', type=click.Choice(list(cli.commands.keys()) + ['exit']))
+    while value != 'exit':
+        cli.commands[value]()
 
 #SQL for admins
-def admin_SQL(query):
+@cli.command()
+@click.argument('query')
+def SQL(query):
+    """- enter SQL querys"""
     conn = None
     try:
         conn = psycopg2.connect(**params)
@@ -48,8 +34,9 @@ def admin_SQL(query):
             conn.close()
 
 #returns unbooked rooms
+@cli.command()
 def get_unbooked_rooms():
-    """ query data from the vendors table """
+    """- search for unbooked rooms"""
     conn = None
     try:
         conn = psycopg2.connect(**params)
@@ -68,4 +55,15 @@ def get_unbooked_rooms():
     finally:
         if conn is not None:
             conn.close()
+
+if __name__ == "__main__":
+
+    username = input("Enter username: ")
+    password = input("Enter password: ")
+    params = dict(user=username,
+                  password=password,
+                  host="web0.eecs.uottawa.ca",
+                  port="15432",
+                  database=username)
+    main()
 
